@@ -46,31 +46,18 @@ export default function ReportsPage() {
   const handleExport = async () => {
     try {
       const params = new URLSearchParams({ from, to, group_by: groupBy });
-      const res = await api.get(
-        `/reports/sales/export?${params}`,
-        {
-          responseType: 'blob',
-          headers: {
-            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          },
-        }
-      );
-
-      // Create blob and download
-      const blob = new Blob([res.data], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      const res = await api.get(`/reports/sales/export?${params}`, {
+        responseType: 'blob',
       });
-      const url = window.URL.createObjectURL(blob);
+
+      const url = window.URL.createObjectURL(res.data);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `laporan-penjualan-${from}-${to}.xlsx`;
-      document.body.appendChild(link);
+      link.download = `laporan-${from}-${to}.xlsx`;
       link.click();
-      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Gagal mengunduh laporan. Silakan coba lagi.');
+    } catch (e) {
+      alert('Export gagal');
     }
   };
 

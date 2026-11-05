@@ -26,37 +26,18 @@ export default function RedisPage() {
     setIsClient(true);
   }, []);
 
-  const { data: stats, isLoading, error, refetch } = useQuery({
+  const { data: stats, isLoading, error } = useQuery({
     queryKey: ['redis-stats', refreshKey],
     queryFn: async () => {
-      try {
-        console.log('Fetching Redis stats...');
-        const res = await api.get<{ success: boolean; message: string; data: { data: RedisStats } }>('/redis/stats');
-        console.log('Redis response full:', res.data);
-        console.log('Redis response data:', res.data?.data);
-        
-        const statsData = res.data?.data?.data;
-        if (!statsData) {
-          console.warn('No stats data in response, trying fallback');
-          // Try fallback in case structure is different
-          return res.data?.data as any;
-        }
-        
-        console.log('Parsed stats:', statsData);
-        return statsData;
-      } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        console.error('Redis stats error:', message, e);
-        throw new Error(`Failed to load Redis stats: ${message}`);
-      }
+      const res = await api.get('/redis/stats');
+      return res.data.data.data;
     },
-    enabled: isClient,  // Only fetch after component is mounted on client
-    retry: 2,
-    staleTime: 30 * 1000, // 30 seconds
+    enabled: isClient,
+    retry: 1,
   });
 
   const handleRefresh = () => {
-    refetch();
+    setRefreshKey((prev) => prev + 1);
   };
 
   return (

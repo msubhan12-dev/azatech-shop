@@ -26,25 +26,17 @@ export default function AuditPage() {
       try {
         setLoading(true);
         const api = (await import('@/lib/api')).default;
-        const res = await api.get('/audit-logs/recent?limit=50000000');
-
-        console.log('Audit logs response:', res.data);
-
-        // Handle nested response format: res.data = { success, message, data: { data: [...] } }
-        const auditData = res.data?.data?.data || res.data?.data || [];
-        const logArray = Array.isArray(auditData) ? auditData : [];
-        setLogs(logArray);
+        const res = await api.get('/audit-logs/recent?limit=50');
+        const auditData = res.data?.data?.data || [];
+        setLogs(Array.isArray(auditData) ? auditData : []);
         setError(null);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        console.error('Audit logs fetch failed:', message);
-        setError(message);
+        setError(err instanceof Error ? err.message : 'Error');
         setLogs([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchAuditLogs();
   }, []);
 
