@@ -1,10 +1,13 @@
 import { Controller, Get, Query, UseGuards, Param, Res } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AuditService } from '../common/audit/audit.service';
 import { Response } from 'express';
 
+@ApiTags('Audit')
+@ApiBearerAuth()
 @Controller('audit-logs')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')
@@ -16,6 +19,11 @@ export class AuditController {
    * GET /audit-logs/entity?type=Order&id=123&limit=50&offset=0
    */
   @Get('entity')
+  @ApiOperation({ summary: 'Get audit logs for a specific entity (admin only)' })
+  @ApiQuery({ name: 'type', example: 'Order', description: 'Entity type (Order, Customer, Product, etc)' })
+  @ApiQuery({ name: 'id', example: '123', description: 'Entity ID' })
+  @ApiQuery({ name: 'limit', example: 50, description: 'Limit results', required: false })
+  @ApiQuery({ name: 'offset', example: 0, description: 'Offset for pagination', required: false })
   async getEntityLogs(
     @Query('type') type: string,
     @Query('id') id: string,
@@ -45,6 +53,8 @@ export class AuditController {
    * GET /audit-logs/recent?limit=20
    */
   @Get('recent')
+  @ApiOperation({ summary: 'Get recent audit logs activity feed (admin only)' })
+  @ApiQuery({ name: 'limit', example: 20, description: 'Number of recent logs', required: false })
   async getRecentLogs(@Query('limit') limit: string = '20') {
     const logs = await this.auditService.getRecentLogs(parseInt(limit));
     return {
@@ -57,6 +67,9 @@ export class AuditController {
    * GET /audit-logs/export?type=Order&id=123
    */
   @Get('export')
+  @ApiOperation({ summary: 'Export audit logs as CSV file (admin only)' })
+  @ApiQuery({ name: 'type', example: 'Order', description: 'Entity type' })
+  @ApiQuery({ name: 'id', example: '123', description: 'Entity ID' })
   async exportLogs(
     @Query('type') type: string,
     @Query('id') id: string,

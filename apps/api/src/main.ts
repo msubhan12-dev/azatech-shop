@@ -67,6 +67,8 @@ async function bootstrap() {
       .addTag('Customers', 'Customer management')
       .addTag('Orders', 'Order management')
       .addTag('Reports', 'Sales reports (admin only)')
+      .addTag('Audit', 'Audit logs (admin only)')
+      .addTag('Monitoring', 'Redis and queue monitoring (admin only)')
       .addTag('Dashboard', 'Dashboard summary')
       .addTag('Health', 'Health check')
       .build();

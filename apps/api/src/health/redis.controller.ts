@@ -6,15 +6,15 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { RedisService } from '../common/redis/redis.service';
 
 @ApiTags('Monitoring')
+@ApiBearerAuth()
 @Controller('redis')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')
-@ApiBearerAuth()
 export class RedisController {
   constructor(private readonly redis: RedisService) {}
 
   @Get('stats')
-  @ApiOperation({ summary: 'Get Redis statistics' })
+  @ApiOperation({ summary: 'Get Redis connection statistics and memory usage (admin only)' })
   async getStats() {
     try {
       const stats = await this.redis.getStats();

@@ -43,10 +43,35 @@ export default function ReportsPage() {
     },
   });
 
-  const handleExport = () => {
-    const params = new URLSearchParams({ from, to, group_by: groupBy });
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-    window.location.href = `${apiBase}/reports/sales/export?${params}`;
+  const handleExport = async () => {
+    try {
+      const params = new URLSearchParams({ from, to, group_by: groupBy });
+      const res = await api.get(
+        `/reports/sales/export?${params}`,
+        {
+          responseType: 'blob',
+          headers: {
+            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          },
+        }
+      );
+
+      // Create blob and download
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `laporan-penjualan-${from}-${to}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Gagal mengunduh laporan. Silakan coba lagi.');
+    }
   };
 
   const chartData = (salesData ?? []).map((item) => ({

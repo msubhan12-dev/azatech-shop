@@ -24,14 +24,22 @@ export default function RedisPage() {
     queryKey: ['redis-stats', refreshKey],
     queryFn: async () => {
       try {
-        const res = await api.get<{ success: boolean; data: { data: RedisStats } }>('/redis/stats');
-        if (res.data?.data?.data) {
-          return res.data.data.data;
+        console.log('Fetching Redis stats...');
+        const res = await api.get<{ success: boolean; message: string; data: { data: RedisStats } }>('/redis/stats');
+        console.log('Redis response:', res.data);
+        
+        const statsData = res.data?.data?.data;
+        if (!statsData) {
+          console.warn('No stats data in response');
+          throw new Error('No stats data returned');
         }
-        throw new Error('Invalid response format');
+        
+        console.log('Parsed stats:', statsData);
+        return statsData;
       } catch (e) {
-        console.error('Redis stats fetch error:', e);
-        return null;
+        const message = e instanceof Error ? e.message : String(e);
+        console.error('Redis stats error:', message);
+        throw new Error(`Failed to load Redis stats: ${message}`);
       }
     },
   });
