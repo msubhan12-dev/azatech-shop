@@ -20,13 +20,17 @@ interface RedisStats {
 export default function RedisPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, error } = useQuery({
     queryKey: ['redis-stats', refreshKey],
     queryFn: async () => {
       try {
-        const res = await api.get<{ data: RedisStats }>('/redis/stats');
-        return res.data.data;
+        const res = await api.get<{ success: boolean; data: { data: RedisStats } }>('/redis/stats');
+        if (res.data?.data?.data) {
+          return res.data.data.data;
+        }
+        throw new Error('Invalid response format');
       } catch (e) {
+        console.error('Redis stats fetch error:', e);
         return null;
       }
     },
@@ -55,7 +59,16 @@ export default function RedisPage() {
       </div>
 
       {/* Status */}
-      {stats ? (
+      {error ? (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-600 font-semibold">❌ Error Loading Redis Stats</p>
+          <p className="text-red-500 text-sm mt-2">{error instanceof Error ? error.message : 'Failed to fetch data'}</p>
+        </div>
+      ) : isLoading ? (
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-12 text-center">
+          <p className="text-gray-500 font-semibold">Loading Redis statistics...</p>
+        </div>
+      ) : stats ? (
         <>
           {/* Connection Info */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
