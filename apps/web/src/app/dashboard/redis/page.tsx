@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface RedisStats {
   status: string;
@@ -19,33 +19,44 @@ interface RedisStats {
 
 export default function RedisPage() {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isClient, setIsClient] = useState(false);
 
-  const { data: stats, isLoading, error } = useQuery({
+  // Ensure we're on client before fetching
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const { data: stats, isLoading, error, refetch } = useQuery({
     queryKey: ['redis-stats', refreshKey],
     queryFn: async () => {
       try {
         console.log('Fetching Redis stats...');
         const res = await api.get<{ success: boolean; message: string; data: { data: RedisStats } }>('/redis/stats');
-        console.log('Redis response:', res.data);
+        console.log('Redis response full:', res.data);
+        console.log('Redis response data:', res.data?.data);
         
         const statsData = res.data?.data?.data;
         if (!statsData) {
-          console.warn('No stats data in response');
-          throw new Error('No stats data returned');
+          console.warn('No stats data in response, trying fallback');
+          // Try fallback in case structure is different
+          return res.data?.data as any;
         }
         
         console.log('Parsed stats:', statsData);
         return statsData;
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
-        console.error('Redis stats error:', message);
+        console.error('Redis stats error:', message, e);
         throw new Error(`Failed to load Redis stats: ${message}`);
       }
     },
+    enabled: isClient,  // Only fetch after component is mounted on client
+    retry: 2,
+    staleTime: 30 * 1000, // 30 seconds
   });
 
   const handleRefresh = () => {
-    setRefreshKey((prev) => prev + 1);
+    refetch();
   };
 
   return (

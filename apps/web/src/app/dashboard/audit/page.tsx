@@ -25,24 +25,13 @@ export default function AuditPage() {
     const fetchAuditLogs = async () => {
       try {
         setLoading(true);
-        // Fetch from /api directly (Next.js API route)
-        const response = await fetch('/api/audit-logs/recent?limit=50', {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const api = (await import('@/lib/api')).default;
+        const res = await api.get('/audit-logs/recent?limit=50000000');
 
-        if (!response.ok) {
-          const errorData = await response.text();
-          throw new Error(`HTTP ${response.status}: ${errorData}`);
-        }
+        console.log('Audit logs response:', res.data);
 
-        const data = await response.json();
-        console.log('Audit logs response:', data);
-
-        // Handle nested response format
-        const auditData = data?.data?.data || data?.data || [];
+        // Handle nested response format: res.data = { success, message, data: { data: [...] } }
+        const auditData = res.data?.data?.data || res.data?.data || [];
         const logArray = Array.isArray(auditData) ? auditData : [];
         setLogs(logArray);
         setError(null);
