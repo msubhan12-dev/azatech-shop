@@ -20,6 +20,9 @@ export function middleware(request: NextRequest) {
   // Admin-only routes
   const isAdminOnly =
     pathname.startsWith('/dashboard/reports') ||
+    pathname.startsWith('/dashboard/audit') ||
+    pathname.startsWith('/dashboard/queue') ||
+    pathname.startsWith('/dashboard/redis') ||
     // Product detail (stock adjustment) is admin-only; product list is for all
     pathname.match(/^\/dashboard\/products\/[^/]+$/) !== null;
 

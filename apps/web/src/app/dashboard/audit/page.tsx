@@ -1,229 +1,149 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
-import { formatDateTime } from '@/lib/format';
-import { FileText, Download, Filter } from 'lucide-react';
-import { useState } from 'react';
+
+import { useEffect, useState } from 'react';
 
 interface AuditLog {
-  id: bigint;
+  id: string;
   action: string;
   entityType: string;
   entityId: string;
-  user?: { id: string; name: string; email: string };
-  details?: Record<string, unknown>;
-  ipAddress?: string;
-  userAgent?: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  ipAddress: string;
   createdAt: string;
 }
 
 export default function AuditPage() {
-  const [entityType, setEntityType] = useState('');
-  const [entityId, setEntityId] = useState('');
-  const [action, setAction] = useState('');
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['audit-logs', entityType, entityId, action],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (entityType) params.set('type', entityType);
-      if (entityId) params.set('id', entityId);
-      if (action) params.set('action', action);
-      
-      const res = await api.get<{ data: AuditLog[] }>(`/audit-logs/recent?limit=100`);
-      return res.data.data;
-    },
-  });
+  useEffect(() => {
+    const fetchAuditLogs = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/audit-logs/recent?limit=50', {
+          credentials: 'include',
+        });
 
-  const handleExport = async () => {
-    if (!entityType || !entityId) {
-      alert('Silakan pilih entity type dan ID untuk export');
-      return;
-    }
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
 
-    try {
-      const params = new URLSearchParams({
-        type: entityType,
-        id: entityId,
-      });
-
-      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      
-      const response = await fetch(`${apiBase}/audit-logs/export?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Export failed');
+        const result = await response.json();
+        if (result.success && result.data?.data) {
+          setLogs(Array.isArray(result.data.data) ? result.data.data : []);
+        }
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch audit logs:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load audit logs');
+        setLogs([]);
+      } finally {
+        setLoading(false);
       }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `audit-logs-${entityType}-${entityId}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      alert('Gagal mengexport audit logs');
-    }
-  };
-
-  const actionColor = (actionType: string): string => {
-    const colors: Record<string, string> = {
-      CREATE: 'bg-green-100 text-green-700',
-      UPDATE: 'bg-blue-100 text-blue-700',
-      DELETE: 'bg-red-100 text-red-700',
-      CANCEL: 'bg-yellow-100 text-yellow-700',
-      RESTORE: 'bg-purple-100 text-purple-700',
-      PAYMENT_RECEIVED: 'bg-green-100 text-green-700',
-      SHIPMENT_STARTED: 'bg-blue-100 text-blue-700',
-      ORDER_COMPLETED: 'bg-green-100 text-green-700',
     };
-    return colors[actionType] ?? 'bg-gray-100 text-gray-700';
-  };
+
+    fetchAuditLogs();
+  }, []);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">📋 Audit Log</h1>
-          <p className="text-gray-500 mt-1">Track semua aktivitas user dan perubahan sistem</p>
-        </div>
-        <button
-          onClick={handleExport}
-          disabled={!entityType || !entityId}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md transition-all"
-        >
-          <Download className="w-5 h-5" />
-          Export CSV
-        </button>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">📋 Audit Logs</h1>
+        <p className="text-gray-500 mt-1">All system activities and changes are logged</p>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-5 h-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">Filter Audit</h3>
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-900 font-semibold">Error Loading Audit Logs</p>
+          <p className="text-red-700 text-sm mt-1">{error}</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label htmlFor="entity-type" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-              Entity Type
-            </label>
-            <input
-              id="entity-type"
-              type="text"
-              value={entityType}
-              onChange={(e) => setEntityType(e.target.value)}
-              placeholder="e.g. Order, Product"
-              className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-            />
-          </div>
-          <div>
-            <label htmlFor="entity-id" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-              Entity ID
-            </label>
-            <input
-              id="entity-id"
-              type="text"
-              value={entityId}
-              onChange={(e) => setEntityId(e.target.value)}
-              placeholder="e.g. 123"
-              className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-            />
-          </div>
-          <div>
-            <label htmlFor="action" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-              Action
-            </label>
-            <select
-              id="action"
-              value={action}
-              onChange={(e) => setAction(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-            >
-              <option value="">Semua Action</option>
-              <option value="CREATE">Create</option>
-              <option value="UPDATE">Update</option>
-              <option value="DELETE">Delete</option>
-              <option value="CANCEL">Cancel</option>
-            </select>
-          </div>
-        </div>
-      </div>
+      )}
 
-      {/* Audit Logs Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b-2 border-gray-200 flex items-center gap-2">
-          <FileText className="w-6 h-6 text-blue-600" />
-          <h2 className="text-xl font-bold text-gray-900">Recent Audit Logs</h2>
+      {loading ? (
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-center">
+          <p className="text-gray-500">Loading audit logs...</p>
         </div>
-
-        {isLoading ? (
-          <div className="p-12 text-center">
-            <div className="inline-block animate-spin text-2xl">⏳</div>
-            <p className="text-gray-500 mt-2">Memuat audit logs...</p>
-          </div>
-        ) : isError ? (
-          <div className="p-12 text-center text-red-600">
-            <p>❌ Gagal memuat audit logs</p>
-          </div>
-        ) : !data || data.length === 0 ? (
-          <div className="p-12 text-center text-gray-400">
-            <p>📭 Tidak ada audit logs</p>
-          </div>
-        ) : (
+      ) : logs.length === 0 ? (
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-6 text-center">
+          <p className="text-gray-500">No audit logs found</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                <tr className="text-left text-gray-700">
-                  <th className="px-6 py-4 font-bold">Waktu</th>
-                  <th className="px-6 py-4 font-bold">User</th>
-                  <th className="px-6 py-4 font-bold">Action</th>
-                  <th className="px-6 py-4 font-bold">Entity</th>
-                  <th className="px-6 py-4 font-bold">IP Address</th>
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-900">Time</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-900">Action</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-900">Entity</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-900">User</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-900">IP Address</th>
                 </tr>
               </thead>
               <tbody>
-                {data.map((log, idx) => (
-                  <tr
-                    key={log.id.toString()}
-                    className={`border-t border-gray-100 hover:bg-blue-50 transition-colors ${
-                      idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                    }`}
-                  >
-                    <td className="px-6 py-4 text-gray-700">
-                      <time dateTime={log.createdAt} className="text-xs">
-                        {formatDateTime(log.createdAt)}
-                      </time>
+                {logs.map((log) => (
+                  <tr key={log.id} className="border-b border-gray-200 hover:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-700">
+                      {new Date(log.createdAt).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-gray-900">{log.user?.name ?? 'System'}</div>
-                      <div className="text-xs text-gray-500">{log.user?.email}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 text-xs font-bold rounded-full ${actionColor(log.action)}`}>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-semibold ${
+                          log.action === 'CREATE'
+                            ? 'bg-green-100 text-green-800'
+                            : log.action === 'UPDATE'
+                              ? 'bg-blue-100 text-blue-800'
+                              : log.action === 'DELETE'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-700">
-                      <div className="font-mono text-xs font-semibold">{log.entityType}</div>
-                      <div className="text-xs text-gray-500">{log.entityId}</div>
+                    <td className="px-4 py-3 text-gray-700">
+                      {log.entityType} #{log.entityId}
                     </td>
-                    <td className="px-6 py-4 text-xs text-gray-500 font-mono">{log.ipAddress ?? '-'}</td>
+                    <td className="px-4 py-3 text-gray-700">
+                      <div className="text-sm">{log.user.name}</div>
+                      <div className="text-xs text-gray-500">{log.user.email}</div>
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 font-mono text-xs">{log.ipAddress}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        )}
+        </div>
+      )}
+
+      <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Audit Log API Reference</h2>
+        
+        <div className="space-y-4 text-sm">
+          <div className="bg-blue-50 border border-blue-200 rounded p-4">
+            <p className="font-mono font-semibold text-blue-900 mb-2">GET /api/audit-logs/recent</p>
+            <p className="text-gray-700">Get recent audit logs with optional limit</p>
+            <p className="text-gray-600 mt-2">Query: ?limit=50</p>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 rounded p-4">
+            <p className="font-mono font-semibold text-green-900 mb-2">GET /api/audit-logs/entity</p>
+            <p className="text-gray-700">Filter audit logs by entity type and ID</p>
+            <p className="text-gray-600 mt-2">Query: ?type=Order&id=123&limit=50</p>
+          </div>
+
+          <div className="bg-purple-50 border border-purple-200 rounded p-4">
+            <p className="font-mono font-semibold text-purple-900 mb-2">GET /api/audit-logs/export</p>
+            <p className="text-gray-700">Export audit logs as CSV</p>
+            <p className="text-gray-600 mt-2">Query: ?type=Order&id=123</p>
+          </div>
+        </div>
       </div>
     </div>
   );

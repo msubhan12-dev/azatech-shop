@@ -63,7 +63,7 @@ export class AuditService {
     limit: number = 50,
     offset: number = 0,
   ) {
-    return this.prisma.auditLog.findMany({
+    const logs = await this.prisma.auditLog.findMany({
       where: {
         entityType,
         entityId,
@@ -76,12 +76,18 @@ export class AuditService {
             email: true,
           },
         },
-        // AuditLogRelation would go here if using separate table
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,
     });
+
+    // Convert BigInt to string for JSON serialization
+    return logs.map((log) => ({
+      ...log,
+      id: log.id.toString(),
+      userId: log.userId?.toString() || null,
+    }));
   }
 
   /**
@@ -102,7 +108,7 @@ export class AuditService {
    * Get recent audit logs (for dashboard/activity feed)
    */
   async getRecentLogs(limit: number = 20) {
-    return this.prisma.auditLog.findMany({
+    const logs = await this.prisma.auditLog.findMany({
       include: {
         user: {
           select: {
@@ -115,6 +121,13 @@ export class AuditService {
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
+
+    // Convert BigInt to string for JSON serialization
+    return logs.map((log) => ({
+      ...log,
+      id: log.id.toString(),
+      userId: log.userId?.toString() || null,
+    }));
   }
 
   /**
