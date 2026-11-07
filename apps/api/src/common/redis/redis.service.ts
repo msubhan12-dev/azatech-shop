@@ -100,6 +100,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         host: this.configService.get<string>('REDIS_HOST', 'localhost'),
         port: this.configService.get<number>('REDIS_PORT', 6379),
         db: this.configService.get<number>('REDIS_DB', 0),
+        dbName: `Redis DB ${this.configService.get<number>('REDIS_DB', 0)} (Cache)`,
         memory: stats.used_memory_human || 'N/A',
         connectedClients: parseInt(stats.connected_clients || '0', 10),
         usedMemory: stats.used_memory_human || 'N/A',

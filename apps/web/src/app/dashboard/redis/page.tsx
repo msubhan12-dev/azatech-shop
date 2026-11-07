@@ -8,6 +8,7 @@ interface RedisStats {
   host: string;
   port: number;
   db: number;
+  dbName: string;
   memory: string;
   connectedClients: number;
   usedMemory: string;
@@ -72,7 +73,7 @@ export default function RedisPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div>
                 <p className="text-xs font-semibold text-gray-600 uppercase">Database</p>
-                <p className="text-lg font-bold text-gray-900 mt-2">DB {stats.db}</p>
+                <p className="text-lg font-bold text-gray-900 mt-2">{stats.dbName}</p>
               </div>
             </div>
           </div>
