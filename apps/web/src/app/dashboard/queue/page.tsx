@@ -37,8 +37,8 @@ export default function QueuePage() {
     queryKey: ['queue-stats', refreshKey],
     queryFn: async () => {
       try {
-        const res = await api.get<{ data: QueueInfo[] }>('/queue/stats');
-        return res.data.data;
+        const res = await api.get<{ data: { data: QueueInfo[] } }>('/queue/stats');
+        return res.data?.data?.data || [];
       } catch (e) {
         return [];
       }

@@ -20,8 +20,8 @@ export default function RedisPage() {
   const { data: stats, isLoading, isError } = useQuery({
     queryKey: ['redis-stats'],
     queryFn: async () => {
-      const res = await api.get<{ data: RedisStats }>('/redis/stats');
-      return res.data?.data || null;
+      const res = await api.get<{ data: { data: RedisStats } }>('/redis/stats');
+      return res.data?.data?.data || null;
     },
   });
 

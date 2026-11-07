@@ -21,8 +21,8 @@ export default function AuditPage() {
   const { data: logs, isLoading, isError } = useQuery({
     queryKey: ['audit-logs'],
     queryFn: async () => {
-      const res = await api.get<{ data: AuditLog[] }>('/audit-logs/recent?limit=50');
-      return res.data?.data || [];
+      const res = await api.get<{ data: { data: AuditLog[] } }>('/audit-logs/recent?limit=50');
+      return res.data?.data?.data || [];
     },
   });
 
