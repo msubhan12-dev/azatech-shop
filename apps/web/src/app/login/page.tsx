@@ -13,6 +13,21 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+// CSS animations
+const animationStyles = `
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  .animate-shake {
+    animation: shake 0.3s ease-in-out;
+  }
+  .delay-2000 {
+    animation-delay: 2s;
+  }
+`;
+
 export default function LoginPage() {
   const { login, isLoggingIn } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -35,6 +50,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-900 to-slate-950 px-4 py-8 relative overflow-hidden">
+      <style>{animationStyles}</style>
       {/* Animated background elements */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-2000"></div>
@@ -210,20 +226,6 @@ export default function LoginPage() {
           <p className="text-xs text-gray-400">© 2026 Azatech Shop. Semua hak dilindungi.</p>
         </div>
       </div>
-
-      <style>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
-        .animate-shake {
-          animation: shake 0.3s ease-in-out;
-        }
-        .delay-2000 {
-          animation-delay: 2s;
-        }
-      `}</style>
     </div>
   );
 }
