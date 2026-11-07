@@ -30,7 +30,10 @@ export default function RedisPage() {
     queryKey: ['redis-stats', refreshKey],
     queryFn: async () => {
       const res = await api.get('/redis/stats');
-      return res.data.data.data;
+      // Backend returns: { success, message, data: { data: { status, host, ... } } }
+      const statsData = res.data?.data?.data || res.data?.data;
+      if (!statsData) throw new Error('No stats');
+      return statsData;
     },
     enabled: isClient,
     retry: 1,

@@ -27,11 +27,15 @@ export default function AuditPage() {
         setLoading(true);
         const api = (await import('@/lib/api')).default;
         const res = await api.get('/audit-logs/recent?limit=50');
-        const auditData = res.data?.data?.data || [];
-        setLogs(Array.isArray(auditData) ? auditData : []);
+        // Backend returns: { success, message, data: { data: [...] } }
+        // Extract the actual logs array
+        const logs = res.data?.data?.data || res.data?.data || [];
+        setLogs(Array.isArray(logs) ? logs : []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error');
+        const msg = err instanceof Error ? err.message : 'Error loading audit logs';
+        console.error('Audit error:', msg);
+        setError(msg);
         setLogs([]);
       } finally {
         setLoading(false);

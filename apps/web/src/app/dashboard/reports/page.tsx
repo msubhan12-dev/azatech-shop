@@ -46,18 +46,21 @@ export default function ReportsPage() {
   const handleExport = async () => {
     try {
       const params = new URLSearchParams({ from, to, group_by: groupBy });
+      // Use api client - axios interceptor will attach token automatically
       const res = await api.get(`/reports/sales/export?${params}`, {
         responseType: 'blob',
       });
 
+      // Create blob URL and trigger download
       const url = window.URL.createObjectURL(res.data);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `laporan-${from}-${to}.xlsx`;
+      link.download = `sales-report-${from}-to-${to}.xlsx`;
       link.click();
       window.URL.revokeObjectURL(url);
-    } catch (e) {
-      alert('Export gagal');
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Export gagal. Pastikan Anda sudah login.');
     }
   };
 
