@@ -4,14 +4,25 @@ import api from '@/lib/api';
 import { Zap, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
-interface QueueStats {
+interface QueueInfo {
   name: string;
-  status: string;
-  pending: number;
-  active: number;
-  completed: number;
-  failed: number;
-  delayed: number;
+  jobCounts: {
+    waiting: number;
+    active: number;
+    completed: number;
+    failed: number;
+    delayed: number;
+  };
+  jobTypes: {
+    [key: string]: string;
+  };
+  config: {
+    retryAttempts: number;
+    backoffType: string;
+    initialDelay: number;
+    keepCompleted: number;
+    keepFailed: number;
+  };
 }
 
 export default function QueuePage() {
@@ -21,7 +32,7 @@ export default function QueuePage() {
     queryKey: ['queue-stats', refreshKey],
     queryFn: async () => {
       try {
-        const res = await api.get<{ data: QueueStats[] }>('/queue/stats');
+        const res = await api.get<{ data: QueueInfo[] }>('/queue/stats');
         return res.data.data;
       } catch (e) {
         return [];
@@ -32,6 +43,9 @@ export default function QueuePage() {
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1);
   };
+
+  // Get config from first queue (they're all the same)
+  const config = queues?.[0]?.config;
 
   return (
     <div className="space-y-6">
@@ -59,12 +73,8 @@ export default function QueuePage() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="font-bold text-gray-900 text-lg capitalize">{queue.name} Queue</h3>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded mt-1 ${
-                    queue.status === 'active' 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {queue.status === 'active' ? '🟢 Active' : '🟡 Paused'}
+                  <span className="text-xs font-semibold px-2 py-1 rounded mt-1 bg-green-100 text-green-700">
+                    🟢 Active
                   </span>
                 </div>
                 <Zap className="w-6 h-6 text-purple-600" />
@@ -73,29 +83,29 @@ export default function QueuePage() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-blue-50 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-blue-700 uppercase">Pending</p>
-                    <p className="text-2xl font-bold text-blue-900 mt-1">{queue.pending}</p>
+                    <p className="text-xs font-semibold text-blue-700 uppercase">Waiting</p>
+                    <p className="text-2xl font-bold text-blue-900 mt-1">{queue.jobCounts.waiting}</p>
                   </div>
                   <div className="bg-green-50 rounded-lg p-3">
                     <p className="text-xs font-semibold text-green-700 uppercase">Active</p>
-                    <p className="text-2xl font-bold text-green-900 mt-1">{queue.active}</p>
+                    <p className="text-2xl font-bold text-green-900 mt-1">{queue.jobCounts.active}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-purple-50 rounded-lg p-3">
                     <p className="text-xs font-semibold text-purple-700 uppercase">Completed</p>
-                    <p className="text-2xl font-bold text-purple-900 mt-1">{queue.completed}</p>
+                    <p className="text-2xl font-bold text-purple-900 mt-1">{queue.jobCounts.completed}</p>
                   </div>
                   <div className="bg-red-50 rounded-lg p-3">
                     <p className="text-xs font-semibold text-red-700 uppercase">Failed</p>
-                    <p className="text-2xl font-bold text-red-900 mt-1">{queue.failed}</p>
+                    <p className="text-2xl font-bold text-red-900 mt-1">{queue.jobCounts.failed}</p>
                   </div>
                 </div>
 
                 <div className="bg-yellow-50 rounded-lg p-3">
                   <p className="text-xs font-semibold text-yellow-700 uppercase">Delayed</p>
-                  <p className="text-2xl font-bold text-yellow-900 mt-1">{queue.delayed}</p>
+                  <p className="text-2xl font-bold text-yellow-900 mt-1">{queue.jobCounts.delayed}</p>
                 </div>
               </div>
             </div>
@@ -127,31 +137,34 @@ export default function QueuePage() {
       </div>
 
       {/* Configuration */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-bold text-gray-900 mb-4">⚙️ Configuration</h3>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Retry Attempts:</span>
-            <span className="font-mono font-bold text-gray-900">3</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Backoff Type:</span>
-            <span className="font-mono font-bold text-gray-900">exponential</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Initial Delay:</span>
-            <span className="font-mono font-bold text-gray-900">1000ms</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Keep Completed:</span>
-            <span className="font-mono font-bold text-gray-900">1000 jobs</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Keep Failed:</span>
-            <span className="font-mono font-bold text-gray-900">5000 jobs</span>
+      {config && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="font-bold text-gray-900 mb-4">⚙️ Configuration</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Retry Attempts:</span>
+              <span className="font-mono font-bold text-gray-900">{config.retryAttempts}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Backoff Type:</span>
+              <span className="font-mono font-bold text-gray-900">{config.backoffType}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Initial Delay:</span>
+              <span className="font-mono font-bold text-gray-900">{config.initialDelay}ms</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Keep Completed:</span>
+              <span className="font-mono font-bold text-gray-900">{config.keepCompleted} jobs</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Keep Failed:</span>
+              <span className="font-mono font-bold text-gray-900">{config.keepFailed} jobs</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
+

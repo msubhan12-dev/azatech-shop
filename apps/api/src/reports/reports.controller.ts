@@ -5,6 +5,7 @@ import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Audit } from '../common/decorators/audit.decorator';
 import { IsOptional, IsEnum, IsDateString, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -51,6 +52,11 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('sales/export')
+  @Audit({
+    action: 'CREATE',
+    entityType: 'Report',
+    getEntityId: (response) => `export-${new Date().getTime()}`,
+  })
   @ApiOperation({ summary: 'Export sales report as Excel (admin only)' })
   async exportSalesReport(
     @Query() query: SalesReportQuery,

@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import { LoginDto, RefreshTokenDto } from './dto/login.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Audit } from '../common/decorators/audit.decorator';
 import { AuthUser } from './interfaces/auth-user.interface';
 
 @ApiTags('Auth')
@@ -21,6 +22,11 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @Audit({
+    action: 'CREATE',
+    entityType: 'Session',
+    getEntityId: (response) => response.data?.user?.id?.toString() || '',
+  })
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 per minute
   @ApiOperation({ summary: 'Login user' })
@@ -36,6 +42,11 @@ export class AuthController {
   }
 
   @Post('logout')
+  @Audit({
+    action: 'DELETE',
+    entityType: 'Session',
+    getEntityId: (response) => '',
+  })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)

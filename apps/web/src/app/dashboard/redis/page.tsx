@@ -1,8 +1,7 @@
 'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { RefreshCw } from 'lucide-react';
-import { useState, useEffect } from 'react';
 
 interface RedisStats {
   status: string;
@@ -18,60 +17,38 @@ interface RedisStats {
 }
 
 export default function RedisPage() {
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [isClient, setIsClient] = useState(false);
-
-  // Ensure we're on client before fetching
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  const { data: stats, isLoading, error } = useQuery({
-    queryKey: ['redis-stats', refreshKey],
+  const { data: stats, isLoading, isError } = useQuery({
+    queryKey: ['redis-stats'],
     queryFn: async () => {
-      const res = await api.get('/redis/stats');
-      // Backend returns: { success, message, data: { data: { status, host, ... } } }
-      const statsData = res.data?.data?.data || res.data?.data;
-      if (!statsData) throw new Error('No stats');
-      return statsData;
+      const res = await api.get<{ data: RedisStats }>('/redis/stats');
+      return res.data?.data || null;
     },
-    enabled: isClient,
-    retry: 1,
   });
 
-  const handleRefresh = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
+  const memoryPercent = stats
+    ? Math.min((parseFloat(stats.usedMemory) / parseFloat(stats.totalSystemMemory)) * 100, 100)
+    : 0;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">⚡ Redis Cache</h1>
-          <p className="text-gray-500 mt-1">Monitor koneksi dan penggunaan cache Redis</p>
-        </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 font-semibold shadow-md transition-all"
-        >
-          <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">⚡ Redis Cache</h1>
+        <p className="text-gray-500 mt-1">Monitor koneksi dan penggunaan cache Redis</p>
       </div>
 
-      {/* Status */}
-      {error ? (
+      {isError && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-600 font-semibold">❌ Error Loading Redis Stats</p>
-          <p className="text-red-500 text-sm mt-2">{error instanceof Error ? error.message : 'Failed to fetch data'}</p>
+          <p className="text-red-600 font-semibold">❌ Tidak dapat terhubung ke Redis</p>
         </div>
-      ) : isLoading ? (
+      )}
+
+      {isLoading && (
         <div className="bg-white rounded-lg shadow border border-gray-200 p-12 text-center">
           <p className="text-gray-500 font-semibold">Loading Redis statistics...</p>
         </div>
-      ) : stats ? (
+      )}
+
+      {stats && (
         <>
           {/* Connection Info */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -113,14 +90,7 @@ export default function RedisPage() {
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full"
-                      style={{
-                        width: `${
-                          Math.min(
-                            (parseFloat(stats.usedMemory) / parseFloat(stats.totalSystemMemory)) * 100,
-                            100,
-                          ) || 0
-                        }%`,
-                      }}
+                      style={{ width: `${memoryPercent}%` }}
                     ></div>
                   </div>
                 </div>
@@ -151,10 +121,6 @@ export default function RedisPage() {
             </div>
           </div>
         </>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-          <p className="text-red-600 font-semibold">❌ Tidak dapat terhubung ke Redis</p>
-        </div>
       )}
     </div>
   );

@@ -22,6 +22,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { Audit } from '../common/decorators/audit.decorator';
 
 @ApiTags('Customers')
 @ApiBearerAuth()
@@ -43,18 +44,33 @@ export class CustomersController {
   }
 
   @Post()
+  @Audit({
+    action: 'CREATE',
+    entityType: 'Customer',
+    getEntityId: (response) => response.data?.id?.toString() || '',
+  })
   @ApiOperation({ summary: 'Create customer' })
   create(@Body() dto: CreateCustomerDto) {
     return this.customersService.create(dto);
   }
 
   @Put(':id')
+  @Audit({
+    action: 'UPDATE',
+    entityType: 'Customer',
+    getEntityId: (response) => response.data?.id?.toString() || '',
+  })
   @ApiOperation({ summary: 'Update customer' })
   update(@Param('id') id: string, @Body() dto: UpdateCustomerDto) {
     return this.customersService.update(id, dto);
   }
 
   @Delete(':id')
+  @Audit({
+    action: 'DELETE',
+    entityType: 'Customer',
+    getEntityId: (response) => response.data?.id?.toString() || '',
+  })
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete customer (admin only)' })

@@ -24,13 +24,16 @@ export class AuditInterceptor implements NestInterceptor {
       tap(
         async (response) => {
           // Only log if @Audit() decorator is present
-          if (auditMetadata && user) {
+          if (auditMetadata) {
             try {
+              // For login, extract user from response; for other routes, use request.user
+              const userId = user?.id || response?.data?.user?.id;
+              
               await this.auditService.log({
                 action: auditMetadata.action,
                 entityType: auditMetadata.entityType,
                 entityId: auditMetadata.getEntityId?.(response) || '',
-                userId: user.id,
+                userId: userId ? BigInt(userId.toString()) : undefined,
                 details: {
                   method,
                   path,
@@ -47,13 +50,14 @@ export class AuditInterceptor implements NestInterceptor {
         },
         (error) => {
           // Optionally log failed operations
-          if (auditMetadata && user && auditMetadata.logErrors) {
+          if (auditMetadata && auditMetadata.logErrors) {
             try {
+              const userId = request.user?.id;
               this.auditService.log({
                 action: auditMetadata.action,
                 entityType: auditMetadata.entityType,
                 entityId: auditMetadata.getEntityId?.() || '',
-                userId: user.id,
+                userId: userId ? BigInt(userId.toString()) : undefined,
                 details: {
                   method,
                   path,

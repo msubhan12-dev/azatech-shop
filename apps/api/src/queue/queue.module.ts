@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { InvoiceProcessor } from './invoice.processor';
 import { NotificationsProcessor } from './notifications.processor';
+import { QueueController } from './queue.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
@@ -13,5 +14,6 @@ import { NotificationsModule } from '../notifications/notifications.module';
     NotificationsModule,
   ],
   providers: [InvoiceProcessor, NotificationsProcessor],
+  controllers: [QueueController],
 })
 export class QueueModule {}

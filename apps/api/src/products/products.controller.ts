@@ -22,6 +22,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Audit } from '../common/decorators/audit.decorator';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
@@ -46,6 +47,11 @@ export class ProductsController {
 
   @Post()
   @Roles('admin')
+  @Audit({
+    action: 'CREATE',
+    entityType: 'Product',
+    getEntityId: (response) => response.data?.id?.toString() || '',
+  })
   @ApiOperation({ summary: 'Create product (admin only)' })
   create(@Body() dto: CreateProductDto, @CurrentUser() user: AuthUser) {
     return this.productsService.create(dto, user);
@@ -53,6 +59,11 @@ export class ProductsController {
 
   @Put(':id')
   @Roles('admin')
+  @Audit({
+    action: 'UPDATE',
+    entityType: 'Product',
+    getEntityId: (response) => response.data?.id?.toString() || '',
+  })
   @ApiOperation({ summary: 'Update product (admin only)' })
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -64,6 +75,15 @@ export class ProductsController {
 
   @Delete(':id')
   @Roles('admin')
+  @Audit({
+    action: 'DELETE',
+    entityType: 'Product',
+    getEntityId: () => {
+      // For deletes, we'll use the param from the request
+      // The interceptor will handle this
+      return '';
+    },
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete product (admin only)' })
   remove(@Param('id', ParseIntPipe) id: number) {
@@ -72,6 +92,11 @@ export class ProductsController {
 
   @Post(':id/stock-adjustments')
   @Roles('admin')
+  @Audit({
+    action: 'UPDATE',
+    entityType: 'Product',
+    getEntityId: () => '', // Will be populated from params
+  })
   @ApiOperation({ summary: 'Stock adjustment (admin only)' })
   adjustStock(
     @Param('id', ParseIntPipe) id: number,

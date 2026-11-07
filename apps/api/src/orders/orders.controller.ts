@@ -23,6 +23,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
+import { Audit } from '../common/decorators/audit.decorator';
 
 @ApiTags('Orders')
 @ApiBearerAuth()
@@ -45,6 +46,11 @@ export class OrdersController {
 
   @Post()
   @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 orders per minute per IP
+  @Audit({
+    action: 'CREATE',
+    entityType: 'Order',
+    getEntityId: (response) => response.data?.id?.toString() || '',
+  })
   @ApiOperation({ summary: 'Create order' })
   @ApiHeader({ name: 'Idempotency-Key', required: false, description: 'UUID for idempotency' })
   create(
@@ -56,12 +62,22 @@ export class OrdersController {
   }
 
   @Post(':id/pay')
+  @Audit({
+    action: 'UPDATE',
+    entityType: 'Order',
+    getEntityId: (response) => response.data?.id?.toString() || '',
+  })
   @ApiOperation({ summary: 'Mark order as PAID (admin/cashier)' })
   pay(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
     return this.ordersService.pay(BigInt(id), user);
   }
 
   @Post(':id/ship')
+  @Audit({
+    action: 'UPDATE',
+    entityType: 'Order',
+    getEntityId: (response) => response.data?.id?.toString() || '',
+  })
   @Roles('admin')
   @ApiOperation({ summary: 'Mark order as SHIPPED (admin only)' })
   ship(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
@@ -69,6 +85,11 @@ export class OrdersController {
   }
 
   @Post(':id/complete')
+  @Audit({
+    action: 'UPDATE',
+    entityType: 'Order',
+    getEntityId: (response) => response.data?.id?.toString() || '',
+  })
   @Roles('admin')
   @ApiOperation({ summary: 'Mark order as COMPLETED (admin only)' })
   complete(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthUser) {
@@ -76,6 +97,11 @@ export class OrdersController {
   }
 
   @Post(':id/cancel')
+  @Audit({
+    action: 'DELETE',
+    entityType: 'Order',
+    getEntityId: (response) => response.data?.id?.toString() || '',
+  })
   @Roles('admin')
   @ApiOperation({ summary: 'Cancel order with reason (admin only)' })
   cancel(
