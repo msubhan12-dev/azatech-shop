@@ -87,6 +87,11 @@ export class AuditService {
       ...log,
       id: log.id.toString(),
       userId: log.userId?.toString() || null,
+      user: log.user ? {
+        id: log.user.id.toString(),
+        name: log.user.name,
+        email: log.user.email,
+      } : null,
     }));
   }
 
@@ -94,14 +99,35 @@ export class AuditService {
    * Get audit logs for a user
    */
   async getLogsForUser(userId: bigint, limit: number = 50, offset: number = 0) {
-    return this.prisma.auditLog.findMany({
+    const logs = await this.prisma.auditLog.findMany({
       where: {
         userId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,
     });
+
+    // Convert BigInt to string for JSON serialization
+    return logs.map((log) => ({
+      ...log,
+      id: log.id.toString(),
+      userId: log.userId?.toString() || null,
+      user: log.user ? {
+        id: log.user.id.toString(),
+        name: log.user.name,
+        email: log.user.email,
+      } : null,
+    }));
   }
 
   /**
@@ -127,6 +153,11 @@ export class AuditService {
       ...log,
       id: log.id.toString(),
       userId: log.userId?.toString() || null,
+      user: log.user ? {
+        id: log.user.id.toString(),
+        name: log.user.name,
+        email: log.user.email,
+      } : null,
     }));
   }
 

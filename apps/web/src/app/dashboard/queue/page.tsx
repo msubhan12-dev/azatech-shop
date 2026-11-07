@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Zap, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface QueueInfo {
   name: string;
@@ -27,6 +27,11 @@ interface QueueInfo {
 
 export default function QueuePage() {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const { data: queues, isLoading } = useQuery({
     queryKey: ['queue-stats', refreshKey],
@@ -38,6 +43,7 @@ export default function QueuePage() {
         return [];
       }
     },
+    enabled: isHydrated,
   });
 
   const handleRefresh = () => {
@@ -46,6 +52,10 @@ export default function QueuePage() {
 
   // Get config from first queue (they're all the same)
   const config = queues?.[0]?.config;
+
+  if (!isHydrated) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">

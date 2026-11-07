@@ -22,7 +22,7 @@ export class AuditInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap(
-        async (response) => {
+        async (response: any) => {
           // Only log if @Audit() decorator is present
           if (auditMetadata) {
             try {
