@@ -129,20 +129,38 @@ export default function QueuePage() {
 
       {/* Job Types Info */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-bold text-gray-900 mb-4">📋 Job Types</h3>
+        <h3 className="font-bold text-gray-900 mb-4">📋 Job Types & Triggers</h3>
         <div className="space-y-3">
           <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
             <div className="font-bold text-gray-900">Invoice Generation</div>
             <p className="text-sm text-gray-600">
-              Trigger: Order status changed to PAID. Generate HTML invoice and send email notification.
+              Trigger: Order status changed to <span className="font-mono font-bold">PAID</span>
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              When an order is marked as paid, a background job automatically generates an HTML invoice and sends it via email.
+            </p>
+            <p className="text-xs text-blue-600 mt-2">
+              💡 Tip: Create an order and mark it as "Bayar" (pay) to trigger this job
             </p>
           </div>
           <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded">
             <div className="font-bold text-gray-900">Low Stock Notifications</div>
             <p className="text-sm text-gray-600">
-              Trigger: Product stock falls below threshold. Send alert email to admin.
+              Trigger: Product stock falls below threshold
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              When a product's stock drops to or below the minimum threshold, an alert email is automatically sent to all admins.
+            </p>
+            <p className="text-xs text-green-600 mt-2">
+              💡 Tip: Adjust product stock to trigger this notification
             </p>
           </div>
+        </div>
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+          <p className="text-xs text-yellow-800">
+            <strong>ℹ️ Note:</strong> Queue status (waiting, active, completed, failed) is different from Order status (pending, paid, shipped, completed).
+            These jobs run in the background after order status changes.
+          </p>
         </div>
       </div>
 
