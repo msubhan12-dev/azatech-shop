@@ -79,11 +79,11 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat Cards - Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up animation-delay-100">
         {statCards.map((card, idx) => (
           <div
             key={idx}
-            className={`group relative overflow-hidden rounded-2xl ${card.color} ${card.borderColor} border-2 p-8 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer`}
+            className={`group relative overflow-hidden rounded-2xl ${card.color} ${card.borderColor} border-2 p-8 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer animate-slide-up`}
             style={{ animationDelay: `${idx * 0.1}s` }}
           >
             {/* Content */}
@@ -104,7 +104,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Order Status Breakdown */}
-      <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-md animate-slide-up" style={{ animationDelay: '0.4s' }}>
+      <div className="bg-white border border-gray-200 p-8 rounded-2xl shadow-md animate-slide-up animation-delay-400">
         <h2 className="text-3xl font-black text-gray-900 mb-8 flex items-center gap-3">
           <span className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
             <TrendingUp className="w-6 h-6 text-white" />
@@ -121,7 +121,7 @@ export default function DashboardPage() {
           ].map((status, idx) => (
             <div
               key={idx}
-              className={`group ${status.color} border-2 rounded-2xl p-6 text-center shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 cursor-pointer`}
+              className={`group ${status.color} border-2 rounded-2xl p-6 text-center shadow-sm hover:shadow-md hover:scale-105 transition-all duration-300 cursor-pointer animate-slide-up`}
               style={{ animationDelay: `${0.5 + idx * 0.1}s` }}
             >
               <p className="text-3xl mb-2 group-hover:scale-125 transition-transform duration-300">{status.icon}</p>
@@ -133,7 +133,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Orders */}
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-md animate-slide-up" style={{ animationDelay: '0.7s' }}>
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-md animate-slide-up animation-delay-700">
         <div className="p-8 border-b border-gray-200 bg-gray-50">
           <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
             <span className="w-10 h-10 bg-pink-600 rounded-lg flex items-center justify-center">

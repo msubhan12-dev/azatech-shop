@@ -52,7 +52,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Action Button */}
-      <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
+      <div className="animate-slide-up animation-delay-100">
         <Link
           href="/dashboard/orders/create"
           className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 hover:shadow-lg active:scale-95 transition-all duration-300"
@@ -63,7 +63,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Filters Card */}
-      <div className="bg-white border border-gray-200 p-6 rounded-2xl animate-slide-up" style={{ animationDelay: '0.2s' }}>
+      <div className="bg-white border border-gray-200 p-6 rounded-2xl animate-slide-up animation-delay-200">
         <div className="flex items-center gap-2 mb-4">
           <Filter className="w-5 h-5 text-gray-600" />
           <h3 className="font-bold text-gray-900 text-lg">🔍 Filter Order</h3>
