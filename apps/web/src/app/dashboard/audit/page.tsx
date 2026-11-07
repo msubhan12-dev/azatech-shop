@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import api from '@/lib/api';
 
 interface AuditLog {
   id: string;
@@ -25,10 +26,7 @@ export default function AuditPage() {
     const fetchAuditLogs = async () => {
       try {
         setLoading(true);
-        const api = (await import('@/lib/api')).default;
         const res = await api.get('/audit-logs/recent?limit=50');
-        // Backend returns: { success, message, data: { data: [...] } }
-        // Extract the actual logs array
         const logs = res.data?.data?.data || res.data?.data || [];
         setLogs(Array.isArray(logs) ? logs : []);
         setError(null);

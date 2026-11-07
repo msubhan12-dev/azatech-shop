@@ -19,19 +19,38 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: JwtPayload): Promise<AuthUser> {
+    // payload.type harus "access"
     if (payload.type !== 'access') {
-      throw new UnauthorizedException('Token tidak valid');
+      throw new UnauthorizedException('Invalid token type');
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: BigInt(payload.sub) },
-      select: { id: true, email: true, name: true, role: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('User tidak ditemukan');
+    // payload.sub adalah user ID (string)
+    const userId = payload.sub;
+    if (!userId) {
+      throw new UnauthorizedException('Invalid token: no user ID');
     }
 
-    return { id: user.id, email: user.email, name: user.name, role: user.role };
+    // Cari user di database
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: BigInt(userId) },
+        select: { id: true, email: true, name: true, role: true },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      // Return user object - ini akan jadi req.user
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      };
+    } catch (err) {
+      console.error('JWT validation error:', err);
+      throw new UnauthorizedException('Token validation failed');
+    }
   }
 }
