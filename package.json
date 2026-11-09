@@ -1,0 +1,22 @@
+{
+  "name": "azatech-online-shop",
+  "version": "1.0.0",
+  "description": "Production-grade Online Shop Order Management System",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:run": "pnpm -r test:run",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
