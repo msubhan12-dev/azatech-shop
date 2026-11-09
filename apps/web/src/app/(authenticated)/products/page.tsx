@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { productsAPI } from '@/lib/api'
@@ -10,7 +10,7 @@ import ProductForm from '@/components/ProductForm'
 import toast from 'react-hot-toast'
 import { Plus, ChevronLeft, ChevronRight, AlertCircle, Edit, Trash2 } from 'lucide-react'
 
-export default function ProductsPage() {
+function ProductsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -236,5 +236,13 @@ export default function ProductsPage() {
         />
       </Modal>
     </div>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <ProductsContent />
+    </Suspense>
   )
 }
