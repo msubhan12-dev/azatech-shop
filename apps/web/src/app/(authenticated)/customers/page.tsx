@@ -107,12 +107,12 @@ export default function CustomersPage() {
               {customers?.map((customer: any) => (
                 <tr key={customer.id} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {customer.customerName}
+                    {customer.customer_name}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{customer.email}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{customer.phone}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    <span className="line-clamp-1">{customer.customerAddress}</span>
+                    <span className="line-clamp-1">{customer.customer_address}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{customer.gender}</td>
                   <td className="px-6 py-4 text-sm">
