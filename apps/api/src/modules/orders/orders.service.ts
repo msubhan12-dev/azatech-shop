@@ -56,6 +56,67 @@ export class OrdersService {
     @InjectQueue('notifications') private notificationQueue: Queue,
   ) {}
 
+  async getInvoice(orderId: number) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        customer: true,
+        items: { include: { product: true } },
+        statusHistories: { orderBy: { createdAt: 'asc' } },
+      },
+    });
+
+    if (!order) throw new NotFoundException('Order not found');
+
+    const subtotal = order.items.reduce((sum, item) => sum + Number(item.subtotal), 0);
+    const tax = Math.round(subtotal * 0.1);
+    const total = subtotal + tax;
+
+    const itemsHtml = order.items
+      .map(
+        (item) => `
+        <tr>
+          <td>${item.product?.productName || '-'}</td>
+          <td style="text-align:center">${item.quantity}</td>
+          <td style="text-align:right">Rp${Number(item.unitPrice).toLocaleString('id-ID')}</td>
+          <td style="text-align:right">Rp${Number(item.subtotal).toLocaleString('id-ID')}</td>
+        </tr>`,
+      )
+      .join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="id">
+<head><meta charset="UTF-8"><title>Invoice ${order.orderNumber}</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; color: #333; }
+  h1 { color: #1a56db; } table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  th, td { padding: 10px; border: 1px solid #ddd; } th { background: #f5f5f5; }
+  .total { font-size: 1.2em; font-weight: bold; color: #1a56db; }
+  .status { display: inline-block; padding: 4px 12px; background: #d1fae5; color: #065f46; border-radius: 999px; }
+</style>
+</head>
+<body>
+  <h1>INVOICE</h1>
+  <table>
+    <tr><td><strong>No. Order</strong></td><td>${order.orderNumber}</td></tr>
+    <tr><td><strong>Tanggal</strong></td><td>${new Date(order.orderDate).toLocaleDateString('id-ID')}</td></tr>
+    <tr><td><strong>Customer</strong></td><td>${order.customer?.customerName || '-'}</td></tr>
+    <tr><td><strong>Status</strong></td><td><span class="status">${order.status}</span></td></tr>
+  </table>
+  <table>
+    <thead><tr><th>Produk</th><th>Qty</th><th>Harga Satuan</th><th>Subtotal</th></tr></thead>
+    <tbody>${itemsHtml}</tbody>
+    <tfoot>
+      <tr><td colspan="3" style="text-align:right">Subtotal</td><td style="text-align:right">Rp${subtotal.toLocaleString('id-ID')}</td></tr>
+      <tr><td colspan="3" style="text-align:right">PPN 10%</td><td style="text-align:right">Rp${tax.toLocaleString('id-ID')}</td></tr>
+      <tr class="total"><td colspan="3" style="text-align:right">Total</td><td style="text-align:right">Rp${total.toLocaleString('id-ID')}</td></tr>
+    </tfoot>
+  </table>
+</body></html>`;
+
+    return { html, order_number: order.orderNumber };
+  }
+
   /**
    * Validate invoice tax calculation to prevent fraud
    * Server-side validation prevents client-side tax manipulation

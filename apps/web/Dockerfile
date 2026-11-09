@@ -32,4 +32,10 @@ COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 EXPOSE 3000
 
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Run as non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app
+USER appuser
+
 CMD ["node", "apps/web/server.js"]

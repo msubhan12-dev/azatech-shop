@@ -29,6 +29,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.2.10",
     "@nestjs/swagger": "^12.1.1",
+    "@nestjs/throttler": "^6.7.1",
     "@prisma/client": "^5.6.0",
     "@scalar/nestjs-api-reference": "^1.2.35",
     "@types/nodemailer": "^8.0.2",

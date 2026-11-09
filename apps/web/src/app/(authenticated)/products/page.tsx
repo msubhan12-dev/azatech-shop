@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { productsAPI } from '@/lib/api'
 import Loading from '@/components/Loading'
@@ -10,13 +11,25 @@ import toast from 'react-hot-toast'
 import { Plus, ChevronLeft, ChevronRight, AlertCircle, Edit, Trash2 } from 'lucide-react'
 
 export default function ProductsPage() {
-  const [page, setPage] = useState(1)
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const [page, setPage] = useState(Number(searchParams.get('page') || 1))
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '')
+  const [search, setSearch] = useState(searchParams.get('search') || '')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
   const [deleting, setDeleting] = useState<number | null>(null)
   const queryClient = useQueryClient()
+
+  // Sync state ke URL
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (page > 1) params.set('page', String(page))
+    if (search) params.set('search', search)
+    const qs = params.toString()
+    router.replace(qs ? `?${qs}` : '/products', { scroll: false })
+  }, [page, search])
 
   const { data: response, isLoading } = useQuery({
     queryKey: ['products', page, search],

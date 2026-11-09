@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProductsModule } from './modules/products/products.module';
 import { CustomersModule } from './modules/customers/customers.module';
@@ -19,6 +21,13 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 60000,   // 1 minute
+        limit: 20,    // 20 requests/minute (general)
+      },
+    ]),
     BullModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST || 'localhost',
@@ -43,7 +52,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     AuditModule,
     JobsModule,
   ],
-  providers: [PrismaService, RedisService],
+  providers: [PrismaService, RedisService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
   exports: [PrismaService, RedisService],
 })
 export class AppModule {}

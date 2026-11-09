@@ -29,5 +29,10 @@ RUN cd apps/api && pnpm run build
 # Expose port
 EXPOSE 3001
 
+# Run as non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app
+USER appuser
+
 # Run migrations and start
 CMD ["sh", "-c", "cd apps/api && npx prisma migrate deploy && npm run start"]

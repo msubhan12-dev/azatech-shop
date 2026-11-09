@@ -9,6 +9,7 @@ import {
   Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiParam, ApiHeader } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
@@ -116,8 +117,8 @@ export class OrdersController {
 
   @Post()
   @UseGuards(JwtGuard)
+  @Throttle({ short: { ttl: 60000, limit: 10 } })
   @ApiOperation({
-    summary: 'Create Order',
     description: 'Create a new order with items. Uses idempotency key to prevent duplicate orders. Returns 201 for new order, 200 if order already exists with same key, 409 if stock insufficient.',
   })
   @ApiHeader({
@@ -265,6 +266,20 @@ export class OrdersController {
   @ApiResponse({ status: 404, description: 'Order not found' })
   async completeOrder(@Param('id') id: string, @CurrentUser() user: any) {
     return this.orders.completeOrder(parseInt(id), user.sub);
+  }
+
+  @Get(':id/invoice')
+  @UseGuards(JwtGuard)
+  @ApiOperation({
+    summary: 'Get Invoice',
+    description: 'Get invoice HTML for a specific order. Only available for PAID, SHIPPED, or COMPLETED orders.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'Order ID' })
+  @ApiResponse({ status: 200, description: 'Invoice HTML' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Order not found' })
+  async getInvoice(@Param('id') id: string) {
+    return this.orders.getInvoice(parseInt(id));
   }
 
   @Post(':id/invoice/validate')
